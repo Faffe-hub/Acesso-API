@@ -12,54 +12,122 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-image: url('https://t2.tudocdn.net/143914?w=1920&h=1440'); /* URL da imagem de fundo */
+            background-size: cover; /* Cobre toda a tela */
+            background-position: center; /* Centraliza a imagem */
+            background-repeat: no-repeat; /* Não repete a imagem */
         }
-        .container {
-            background-color: #fff;
-            padding: 20px;
+
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.9); /* Fundo branco semi-transparente */
+            padding: 40px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            width: 320px;
             text-align: center;
-            width: 300px;
+            transition: transform 0.3s;
         }
+
+        .login-container:hover {
+            transform: scale(1.03);
+        }
+
         h1 {
             font-size: 24px;
-            color: #333;
+            color: #444;
+            margin-bottom: 20px;
         }
+
         input[type="email"], input[type="password"] {
-            width: 100%;
+            width: calc(100% - 20px);
             padding: 10px;
             margin: 10px 0;
-            border: 1px solid #ccc;
+            border: 1px solid #bbb;
             border-radius: 5px;
             font-size: 16px;
+            transition: border-color 0.3s;
         }
+
+        input[type="email"]:focus, input[type="password"]:focus {
+            border-color: #888;
+            outline: none;
+        }
+
         button {
-            background-color: #4CAF50;
+            background-color: #6c757d;
             color: white;
-            padding: 10px;
+            padding: 12px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
+            font-size: 16px;
+            transition: background-color 0.3s;
         }
+
         button:hover {
-            background-color: #45a049;
+            background-color: #5a6268;
         }
+
         #message {
             margin-top: 15px;
             color: red;
             font-size: 14px;
         }
-        #cityList {
-            margin-top: 20px;
+
+        .result-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .result-container h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        .result-container p {
+            word-wrap: break-word;
+            font-size: 14px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 90%;
+            margin: 10px auto;
+            overflow-wrap: break-word;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
             text-align: left;
+        }
+
+        th {
+            background-color: #6c757d;
+            color: white;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <!-- Caixa de login -->
+    <div class="login-container" id="loginContainer">
         <h1>ATIVIDADE PRÁTICA DE ACESSO API</h1>
         
         <form id="loginForm">
@@ -69,14 +137,31 @@
         </form>
 
         <p id="message"></p>
-        <div id="cityList"></div>
+    </div>
+
+    <!-- Container de resultados após o login -->
+    <div class="result-container" id="resultContainer" style="display: none;">
+        <h2>Token</h2>
+        <p id="tokenDisplay"></p>
+
+        <h2>Cidades</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                </tr>
+            </thead>
+            <tbody id="cityTableBody">
+                <!-- Linhas da tabela serão adicionadas aqui -->
+            </tbody>
+        </table>
     </div>
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', async function(event) {
             event.preventDefault();  // Impede o envio padrão do formulário
 
-            // Captura os valores inseridos pelo usuário
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
@@ -95,15 +180,17 @@
 
                 const data = await response.json();
 
-                // Verifica se a resposta foi bem-sucedida
                 if (response.ok) {
-                    console.log('Token recebido:', data.token);
                     document.getElementById('message').innerText = 'Login realizado com sucesso!';
+                    document.getElementById('tokenDisplay').innerText = formatToken(data.token);
+
+                    // Esconde a página de login e mostra a página com o token e cidades
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('resultContainer').style.display = 'block';
 
                     // Agora que temos o token, vamos buscar as cidades
                     await fetchCities(data.token);
                 } else {
-                    // Exibe uma mensagem de erro caso o login falhe
                     document.getElementById('message').innerText = 'Erro no login: ' + data.message;
                 }
             } catch (error) {
@@ -117,18 +204,17 @@
                 const response = await fetch('http://137.184.108.252:5000/api/cidades', {
                     method: 'GET',
                     headers: {
-                        'x-access-token': token  // Inclui o token no cabeçalho
+                        'x-access-token': token
                     }
                 });
 
                 const cities = await response.json();
 
-                // Exibe a lista de cidades
                 if (response.ok) {
-                    const cityListDiv = document.getElementById('cityList');
-                    cityListDiv.innerHTML = '<h2>Cidades</h2><ul>' + 
-                        cities.map(city => `<li>${city.nome} (ID: ${city.id})</li>`).join('') +
-                        '</ul>';
+                    const cityTableBody = document.getElementById('cityTableBody');
+                    cityTableBody.innerHTML = cities.map(city => 
+                        `<tr><td>${city.id}</td><td>${city.nome}</td></tr>`
+                    ).join('');
                 } else {
                     document.getElementById('message').innerText = 'Erro ao buscar cidades: ' + cities.message;
                 }
@@ -136,6 +222,11 @@
                 console.error('Erro ao buscar cidades:', error);
                 document.getElementById('message').innerText = 'Erro ao buscar cidades: ' + error.message;
             }
+        }
+
+        function formatToken(token) {
+            // Adiciona quebras de linha no token para que não estoure a página
+            return token.match(/.{1,50}/g).join('\n');
         }
     </script>
 
