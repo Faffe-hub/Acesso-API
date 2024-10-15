@@ -140,7 +140,15 @@
 
         const response = await fetch('https://cors-anywhere.herokuapp.com/http://137.184.108.252:5000/api/login', { ... });
 
-    
+        const response = await fetch('https://cors-anywhere.herokuapp.com/http://137.184.108.252:5000/api/login', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email: 'marcelofaffe@gmail.com', password: 'WOg2f4xNfEJy' })
+});
+
+
     </script>
 
 </body>
